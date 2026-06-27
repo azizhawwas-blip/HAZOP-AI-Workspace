@@ -99,19 +99,39 @@ with tab1:
                 with st.status("Processing Live HAZOP Pipeline...", expanded=True) as status:
                     status.update(label="🔍 Analyzing P&ID layout and compiling custom nodes...", state="running")
                     
-                    response_1 = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=[pil_image, PROMPT_1]
-                    )
+                    try:
+                        response_1 = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=[pil_image, PROMPT_1]
+                        )
+                    except Exception as e:
+                        if "503" in str(e) or "UNAVAILABLE" in str(e):
+                            response_1 = client.models.generate_content(
+                                model='gemini-2.5-flash-lite',
+                                contents=[pil_image, PROMPT_1]
+                            )
+                        else:
+                            raise e
+
                     raw_json_1 = response_1.text.replace("```json", "").replace("```", "").strip()
                     hidden_nodes_data = json.loads(raw_json_1)
                     
                     status.update(label="🛡️ Applying matrix logic and generating credible risk deviations...", state="running")
                     
-                    response_2 = client.models.generate_content(
-                        model='gemini-2.5-flash',
-                        contents=[f"Data:\n{json.dumps(hidden_nodes_data)}\n\nInstructions:\n{PROMPT_2}"]
-                    )
+                    try:
+                        response_2 = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=[f"Data:\n{json.dumps(hidden_nodes_data)}\n\nInstructions:\n{PROMPT_2}"]
+                        )
+                    except Exception as e:
+                        if "503" in str(e) or "UNAVAILABLE" in str(e):
+                            response_2 = client.models.generate_content(
+                                model='gemini-2.5-flash-lite',
+                                contents=[f"Data:\n{json.dumps(hidden_nodes_data)}\n\nInstructions:\n{PROMPT_2}"]
+                            )
+                        else:
+                            raise e
+
                     raw_json_2 = response_2.text.replace("```json", "").replace("```", "").strip()
                     final_hazop_rows = json.loads(raw_json_2)
                     
@@ -175,10 +195,21 @@ with tab2:
                 # System configuration injected into the baseline interaction text block
                 system_context = "You are a professional, highly analytical Process Safety Engineer and technical advisor. Provide expert, clear engineering guidance."
                 
-                chat_response = client.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=[f"System Context: {system_context}\n\nUser Query: {user_query}"]
-                )
+                try:
+                    # Attempt standard Flash model first
+                    chat_response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=[f"System Context: {system_context}\n\nUser Query: {user_query}"]
+                    )
+                except Exception as e:
+                    # Fallback to high-availability Flash-Lite model if 503 server overload occurs
+                    if "503" in str(e) or "UNAVAILABLE" in str(e):
+                        chat_response = client.models.generate_content(
+                            model='gemini-2.5-flash-lite',
+                            contents=[f"System Context: {system_context}\n\nUser Query: {user_query}"]
+                        )
+                    else:
+                        raise e
                 
                 assistant_reply = chat_response.text
                 
