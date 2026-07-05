@@ -60,26 +60,28 @@ with tab1:
     }
     """
 
-    PROMPT_2 = """
-    You are a Principal Electrical Safety Specialist. Take this JSON input detailing an SLD node layout and perform a formal Substation Safety and Hazard Analysis. Loop through the electrical nodes and evaluate standard electrical deviations: Short Circuit / Overcurrent, Overvoltage / Surge, Loss of Phase, and Protective Relay Failure.
+PROMPT_2 = """
+    You are a strict, highly conservative Principal Electrical Protection Auditor. Your job is to validate the provided Single-Line Diagram (SLD) layout against standard power distribution design principles (IEEE / NFPA 70E / IEC). 
+    
+    CRITICAL INSTRUCTION: Do not exaggerate or create hypothetical risks. If a zone has appropriate visible or logically implied engineered safeguards (such as standard overcurrent relays, fuses, or surge arresters for its voltage level), you must explicitly mark it as compliant. Only flag a row as a 'Risk/Finding' if there is a clear protection gap, missing critical hardware safeguard, or a severe operational hazard.
 
-    For every deviation, determine:
-    1. Credible Causes: Electrical/mechanical failures (e.g., insulation degradation, lightning strike, transformer winding fault, breaker mechanism jamming, wildlife intrusion).
-    2. Consequences: Physical and operational impacts (e.g., equipment destruction, thermal damage to cables, arc flash hazards, widespread blackout, step/touch potential risks).
-    3. Engineered Safeguards: Hardware protection devices (e.g., surge arresters, protective relays [50/51, 87, 51N], mechanical interlocking systems, fast-acting fuses, arc-resistant switchgear enclosures). Do not recommend administrative controls like training.
-    4. Recommendations: Actionable engineering advice (e.g., verify breaker interrupting capacity, review relay coordination study, recommend insulation resistance testing).
+    Evaluate each zone for these exact conditions:
+    1. Short Circuit / Overcurrent Protection
+    2. Overvoltage / Lightning Surge Protection
+    3. Loss of Protection Coordination (e.g., a critical bus lacking any downstream isolation)
 
     You must return your output ONLY as a valid JSON array of objects. Do not include any conversational text or markdown formatting.
-    Structure:
+    
+    Structure the JSON output exactly like this:
     [
       {
         "Zone Number": 1,
         "Equipment Zone": "Name from input JSON",
-        "Electrical Fault / Deviation": "Short Circuit",
-        "Credible Causes": "1. Specific breakdown cause text based on voltage/specs",
-        "Consequences": "1. Thermal and equipment damage specific to this bus",
-        "Engineered Safeguards": "1. Expected active protective relays or hardware controls",
-        "Recommendations": "1. Targeted engineering or maintenance action item"
+        "Audit Status": "COMPLIANT / RISK DETECTED",
+        "Identified Gap": "Specify the exact engineering gap if status is RISK DETECTED. If status is COMPLIANT, write 'No risk detected. Standard protective elements are sufficient.'",
+        "Credible Consequence": "None (if Compliant) OR the specific physical damage/arc flash hazard if a gap exists",
+        "Required Engineered Safeguard": "The specific physical hardware component required to close the gap",
+        "Targeted Action Item": "Clear, concise engineering recommendation"
       }
     ]
     """
